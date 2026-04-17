@@ -386,14 +386,24 @@ function playLine(idx) {
   };
 
   voiceAudio.onerror = () => {
-    // Missing file — skip gracefully
+    // Missing file — show text for a natural pause then continue
     duckAmbient(false);
-    setTimeout(() => playLine(idx + 1), 800);
+    const wordCount = LINES[idx].split(' ').length;
+    const pauseMs = Math.max(3000, wordCount * 380);
+    setTimeout(() => {
+      setLineText(LINES[idx], false);
+      setTimeout(() => playLine(idx + 1), 600);
+    }, pauseMs);
   };
 
   voiceAudio.play().catch(() => {
     duckAmbient(false);
-    setTimeout(() => playLine(idx + 1), 800);
+    const wordCount = LINES[idx].split(' ').length;
+    const pauseMs = Math.max(3000, wordCount * 380);
+    setTimeout(() => {
+      setLineText(LINES[idx], false);
+      setTimeout(() => playLine(idx + 1), 600);
+    }, pauseMs);
   });
 }
 
