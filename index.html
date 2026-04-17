@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dreamweaver – Daydreamer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1400;
+    color: #fff8dc;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #start-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    animation: fadeIn 2s ease;
+  }
+
+  #start-screen h1 {
+    font-size: 3.2rem;
+    letter-spacing: 0.18em;
+    color: #ffe066;
+    text-shadow: 0 0 30px rgba(255,200,0,0.6), 0 0 60px rgba(255,180,0,0.3);
+    margin-bottom: 8px;
+  }
+
+  #start-screen p {
+    font-size: 1.1rem;
+    letter-spacing: 0.22em;
+    color: rgba(255,220,100,0.7);
+    margin-bottom: 50px;
+    text-transform: uppercase;
+  }
+
+  #start-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255,210,50,0.6);
+    color: #ffe066;
+    font-family: 'Georgia', serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    padding: 14px 42px;
+    cursor: pointer;
+    border-radius: 40px;
+    transition: all 0.4s ease;
+    text-transform: uppercase;
+  }
+
+  #start-btn:hover {
+    background: rgba(255,210,50,0.12);
+    border-color: #ffe066;
+    box-shadow: 0 0 20px rgba(255,210,0,0.3);
+  }
+
+  #session-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100vh;
+    padding: 20px;
+  }
+
+  canvas#sunflower {
+    width: 220px;
+    height: 220px;
+    margin-bottom: 30px;
+    filter: drop-shadow(0 0 24px rgba(255,200,0,0.5));
+  }
+
+  #subtitle {
+    font-size: 0.8rem;
+    letter-spacing: 0.28em;
+    color: rgba(255,220,100,0.5);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  #line-text {
+    max-width: 560px;
+    text-align: center;
+    font-size: 1.25rem;
+    line-height: 1.9;
+    color: rgba(255,240,180,0.92);
+    min-height: 80px;
+    padding: 0 20px;
+    transition: opacity 0.8s ease;
+    font-style: italic;
+  }
+
+  #progress-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ffe066, #ffb300);
+    width: 0%;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px rgba(255,200,0,0.6);
+  }
+
+  #end-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    animation: fadeIn 2s ease;
+  }
+
+  #end-screen h2 {
+    font-size: 2rem;
+    color: #ffe066;
+    letter-spacing: 0.12em;
+    margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(255,200,0,0.5);
+  }
+
+  #end-screen p {
+    color: rgba(255,220,100,0.65);
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    margin-bottom: 36px;
+  }
+
+  #restart-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255,210,50,0.5);
+    color: #ffe066;
+    font-family: 'Georgia', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.18em;
+    padding: 12px 36px;
+    cursor: pointer;
+    border-radius: 40px;
+    text-transform: uppercase;
+    transition: all 0.4s ease;
+  }
+
+  #restart-btn:hover {
+    background: rgba(255,210,50,0.1);
+    box-shadow: 0 0 16px rgba(255,200,0,0.3);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <h1>Dreamweaver</h1>
+  <p>Daydreamer</p>
+  <button id="start-btn">Begin Your Morning</button>
+</div>
+
+<!-- SESSION SCREEN -->
+<div id="session-screen">
+  <canvas id="sunflower" width="220" height="220"></canvas>
+  <div id="subtitle">Breathe &amp; Awaken</div>
+  <div id="line-text"></div>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen">
+  <h2>Good Morning ☀️</h2>
+  <p>Step into your beautiful day</p>
+  <button id="restart-btn">Begin Again</button>
+</div>
+
+<div id="progress-bar"></div>
+
+<script>
+// ─── LINES ───────────────────────────────────────────────────────────────────
+const LINES = [
+  "Welcome to Dreamweaver… your guide to a beautiful morning… … … …Take a gentle breath… and begin to wake…",
+  "Good morning… beautiful soul… the world is waiting for you…",
+  "You have slept… and now… a new day opens before you… like a flower…",
+  "Breathe in slowly… feel the warmth of the morning light… on your skin…",
+  "Imagine yourself… stepping through a wooden gate… into an English country garden…",
+  "The air is soft… and sweet… with the scent of roses… and fresh earth…",
+  "Bees hum gently… among the lavender… and somewhere… a robin sings…",
+  "You walk along a gravel path… dappled with sunlight… filtering through old oak trees…",
+  "Ahead of you… a meadow of sunflowers… tall and golden… all facing the morning sun…",
+  "You are the sunflower… you too… face the light…",
+  "With each breath in… breathe in possibility… with each breath out… release what no longer serves you…",
+  "You are healthy… you are whole… you are filled with life…",
+  "Today… you will do something kind… for yourself… and for someone else…",
+  "You have everything you need… inside you… right now…",
+  "Feel your fingers… your toes… waking gently… stretching like the petals of a flower…",
+  "You are grounded… like the roots beneath this beautiful garden…",
+  "And you are reaching upward… like every stem and bloom… toward the sun…",
+  "Today is a gift… and you are worthy of receiving it…",
+  "Think of one thing… that brings you joy… hold it in your heart… like a warm stone…",
+  "Carry that joy… into your morning… let it colour everything you do…",
+  "You are loved… more than you know…",
+  "You are capable… of more than you believe…",
+  "The garden reminds you… that everything blooms in its own time…",
+  "Be patient with yourself… be gentle… be kind…",
+  "Today… take one small step… toward something that matters to you…",
+  "Notice the beauty around you… it has always been there… waiting to be seen…",
+  "You are part of something wonderful… this world… this morning… this life…",
+  "You feel refreshed… renewed… ready…",
+  "A butterfly lands nearby… its wings catching the light… a small miracle… just for you…",
+  "Everything is unfolding… exactly as it should…",
+  "Slowly… gently… begin to feel your body… awake and alive…",
+  "Wiggle your fingers… roll your shoulders… take one long… deep breath…",
+  "Let a smile find its way to your face… however small… it is real…",
+  "You are the gardener of your own life… tend it with love…",
+  "Open your eyes when you're ready… and step into your day…",
+  "This is your morning… make it magnificent…",
+  "You are ready… you are capable… you are enough…",
+  "Go gently… go joyfully… go with intention…",
+  "Good morning… beautiful soul…"
+];
+
+const TOTAL = LINES.length; // 39
+
+// ─── AUDIO SETUP ─────────────────────────────────────────────────────────────
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let ctx, ambientSource, ambientGain, voiceGain;
+
+function initAudio() {
+  ctx = new AudioContext();
+  ambientGain = ctx.createGain();
+  voiceGain   = ctx.createGain();
+  ambientGain.gain.value = 0.55;
+  voiceGain.gain.value   = 1.0;
+  ambientGain.connect(ctx.destination);
+  voiceGain.connect(ctx.destination);
+}
+
+function playAmbient() {
+  const audio = new Audio('audio/garden_ambient.mp3');
+  audio.loop  = true;
+  audio.volume = 0.55;
+  audio.play().catch(() => {});
+  return audio;
+}
+
+let ambientEl = null;
+
+function duckAmbient(duck) {
+  if (!ambientEl) return;
+  ambientEl.volume = duck ? 0.18 : 0.55;
+}
+
+// ─── SUNFLOWER ANIMATION ─────────────────────────────────────────────────────
+const canvas = document.getElementById('sunflower');
+const cctx   = canvas.getContext('2d');
+let pulseT   = 0;
+let animFrame;
+
+function drawSunflower(scale) {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  cctx.clearRect(0, 0, W, H);
+
+  cctx.save();
+  cctx.translate(cx, cy);
+  cctx.scale(scale, scale);
+
+  // Outer petals
+  const numPetals = 16;
+  for (let i = 0; i < numPetals; i++) {
+    const angle = (i / numPetals) * Math.PI * 2;
+    cctx.save();
+    cctx.rotate(angle);
+    cctx.beginPath();
+    cctx.ellipse(0, -62, 14, 28, 0, 0, Math.PI * 2);
+    cctx.fillStyle = `rgba(255, 195, 0, ${0.75 + 0.25 * Math.sin(pulseT + i * 0.4)})`;
+    cctx.fill();
+    cctx.restore();
+  }
+
+  // Inner petals (shorter)
+  for (let i = 0; i < numPetals; i++) {
+    const angle = ((i + 0.5) / numPetals) * Math.PI * 2;
+    cctx.save();
+    cctx.rotate(angle);
+    cctx.beginPath();
+    cctx.ellipse(0, -48, 10, 20, 0, 0, Math.PI * 2);
+    cctx.fillStyle = `rgba(255, 160, 0, ${0.6 + 0.2 * Math.sin(pulseT + i * 0.4)})`;
+    cctx.fill();
+    cctx.restore();
+  }
+
+  // Dark brown centre
+  const grad = cctx.createRadialGradient(0, 0, 4, 0, 0, 36);
+  grad.addColorStop(0, '#5a3200');
+  grad.addColorStop(0.6, '#3b1f00');
+  grad.addColorStop(1, '#2a1500');
+  cctx.beginPath();
+  cctx.arc(0, 0, 36, 0, Math.PI * 2);
+  cctx.fillStyle = grad;
+  cctx.fill();
+
+  // Seed pattern dots
+  for (let r = 6; r <= 30; r += 7) {
+    const dots = Math.round(r * 1.1);
+    for (let d = 0; d < dots; d++) {
+      const a = (d / dots) * Math.PI * 2 + r * 0.5;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      cctx.beginPath();
+      cctx.arc(x, y, 2.2, 0, Math.PI * 2);
+      cctx.fillStyle = `rgba(255, 220, 100, 0.35)`;
+      cctx.fill();
+    }
+  }
+
+  // Glow ring
+  const glow = cctx.createRadialGradient(0, 0, 36, 0, 0, 90);
+  glow.addColorStop(0, 'rgba(255,200,0,0.15)');
+  glow.addColorStop(1, 'rgba(255,200,0,0)');
+  cctx.beginPath();
+  cctx.arc(0, 0, 90, 0, Math.PI * 2);
+  cctx.fillStyle = glow;
+  cctx.fill();
+
+  cctx.restore();
+}
+
+function animateSunflower() {
+  pulseT += 0.025;
+  const breathScale = 1 + 0.06 * Math.sin(pulseT * 0.8);
+  drawSunflower(breathScale);
+  animFrame = requestAnimationFrame(animateSunflower);
+}
+
+// ─── SESSION LOGIC ────────────────────────────────────────────────────────────
+let currentLine = 0;
+let voiceAudio  = null;
+
+function updateProgress() {
+  const pct = (currentLine / TOTAL) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function setLineText(text, visible) {
+  const el = document.getElementById('line-text');
+  el.style.opacity = visible ? '1' : '0';
+  if (visible) el.textContent = text;
+}
+
+function playLine(idx) {
+  if (idx >= TOTAL) {
+    endSession();
+    return;
+  }
+  currentLine = idx;
+  updateProgress();
+
+  // Show text
+  setLineText(LINES[idx], false);
+  setTimeout(() => setLineText(LINES[idx], true), 300);
+
+  // Duck ambient
+  duckAmbient(true);
+
+  // Play voice
+  const pad = String(idx).padStart(2, '0');
+  voiceAudio = new Audio(`audio/garden_line_${pad}.mp3`);
+  voiceAudio.volume = 1.0;
+
+  voiceAudio.onended = () => {
+    duckAmbient(false);
+    setLineText(LINES[idx], false);
+    setTimeout(() => playLine(idx + 1), 1800);
+  };
+
+  voiceAudio.onerror = () => {
+    // Missing file — skip gracefully
+    duckAmbient(false);
+    setTimeout(() => playLine(idx + 1), 800);
+  };
+
+  voiceAudio.play().catch(() => {
+    duckAmbient(false);
+    setTimeout(() => playLine(idx + 1), 800);
+  });
+}
+
+function startSession() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('session-screen').style.display = 'flex';
+
+  ambientEl = playAmbient();
+  animateSunflower();
+
+  setTimeout(() => playLine(0), 1200);
+}
+
+function endSession() {
+  cancelAnimationFrame(animFrame);
+  if (ambientEl) { ambientEl.pause(); ambientEl = null; }
+  if (voiceAudio) { voiceAudio.pause(); voiceAudio = null; }
+
+  document.getElementById('session-screen').style.display = 'none';
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('end-screen').style.display = 'flex';
+}
+
+function restartSession() {
+  document.getElementById('end-screen').style.display = 'none';
+  document.getElementById('progress-bar').style.width = '0%';
+  currentLine = 0;
+  startSession();
+}
+
+// ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+document.getElementById('start-btn').addEventListener('click', startSession);
+document.getElementById('restart-btn').addEventListener('click', restartSession);
+</script>
+</body>
+</html>
