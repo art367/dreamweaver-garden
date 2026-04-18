@@ -273,8 +273,7 @@ function playLine(idx) {
   duckAmbient(true);
 
   const pad = String(idx).padStart(2, '0');
-  voiceEl.src = 'audio/garden_line_' + pad + '.mp3';
-  voiceEl.load();
+  voiceEl.setAttribute('src', 'audio/garden_line_' + pad + '.mp3');
   voiceEl.play().catch(() => {
     // Fallback: show text for estimated duration then move on
     duckAmbient(false);
@@ -284,6 +283,9 @@ function playLine(idx) {
 }
 
 voiceEl = new Audio();
+  voiceEl.setAttribute('playsinline', '');
+  voiceEl.setAttribute('webkit-playsinline', '');
+  voiceEl.preload = 'auto';
 voiceEl.volume = 1.0;
 voiceEl.onended = () => {
   duckAmbient(false);
