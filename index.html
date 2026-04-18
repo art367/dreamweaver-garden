@@ -234,194 +234,80 @@ const LINES = [
 const TOTAL = LINES.length; // 39
 
 // ─── AUDIO SETUP ─────────────────────────────────────────────────────────────
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-let ctx, ambientSource, ambientGain, voiceGain;
-
-function initAudio() {
-  ctx = new AudioContext();
-  ambientGain = ctx.createGain();
-  voiceGain   = ctx.createGain();
-  ambientGain.gain.value = 0.55;
-  voiceGain.gain.value   = 1.0;
-  ambientGain.connect(ctx.destination);
-  voiceGain.connect(ctx.destination);
-}
+let ambientEl = null;
+let voiceEl   = null;
+let currentLine = 0;
+const TOTAL = LINES.length;
 
 function playAmbient() {
-  const audio = new Audio('audio/garden_ambient.mp3');
-  audio.loop  = true;
-  audio.volume = 0.55;
-  audio.play().catch(() => {});
-  return audio;
+  ambientEl = new Audio('audio/garden_ambient.mp3');
+  ambientEl.loop   = true;
+  ambientEl.volume = 0.5;
+  ambientEl.play().catch(() => {});
 }
-
-let ambientEl = null;
 
 function duckAmbient(duck) {
   if (!ambientEl) return;
-  ambientEl.volume = duck ? 0.18 : 0.55;
+  ambientEl.volume = duck ? 0.15 : 0.5;
 }
-
-// ─── SUNFLOWER ANIMATION ─────────────────────────────────────────────────────
-const canvas = document.getElementById('sunflower');
-const cctx   = canvas.getContext('2d');
-let pulseT   = 0;
-let animFrame;
-
-function drawSunflower(scale) {
-  const W = canvas.width, H = canvas.height;
-  const cx = W / 2, cy = H / 2;
-  cctx.clearRect(0, 0, W, H);
-
-  cctx.save();
-  cctx.translate(cx, cy);
-  cctx.scale(scale, scale);
-
-  // Outer petals
-  const numPetals = 16;
-  for (let i = 0; i < numPetals; i++) {
-    const angle = (i / numPetals) * Math.PI * 2;
-    cctx.save();
-    cctx.rotate(angle);
-    cctx.beginPath();
-    cctx.ellipse(0, -62, 14, 28, 0, 0, Math.PI * 2);
-    cctx.fillStyle = `rgba(255, 195, 0, ${0.75 + 0.25 * Math.sin(pulseT + i * 0.4)})`;
-    cctx.fill();
-    cctx.restore();
-  }
-
-  // Inner petals (shorter)
-  for (let i = 0; i < numPetals; i++) {
-    const angle = ((i + 0.5) / numPetals) * Math.PI * 2;
-    cctx.save();
-    cctx.rotate(angle);
-    cctx.beginPath();
-    cctx.ellipse(0, -48, 10, 20, 0, 0, Math.PI * 2);
-    cctx.fillStyle = `rgba(255, 160, 0, ${0.6 + 0.2 * Math.sin(pulseT + i * 0.4)})`;
-    cctx.fill();
-    cctx.restore();
-  }
-
-  // Dark brown centre
-  const grad = cctx.createRadialGradient(0, 0, 4, 0, 0, 36);
-  grad.addColorStop(0, '#5a3200');
-  grad.addColorStop(0.6, '#3b1f00');
-  grad.addColorStop(1, '#2a1500');
-  cctx.beginPath();
-  cctx.arc(0, 0, 36, 0, Math.PI * 2);
-  cctx.fillStyle = grad;
-  cctx.fill();
-
-  // Seed pattern dots
-  for (let r = 6; r <= 30; r += 7) {
-    const dots = Math.round(r * 1.1);
-    for (let d = 0; d < dots; d++) {
-      const a = (d / dots) * Math.PI * 2 + r * 0.5;
-      const x = Math.cos(a) * r, y = Math.sin(a) * r;
-      cctx.beginPath();
-      cctx.arc(x, y, 2.2, 0, Math.PI * 2);
-      cctx.fillStyle = `rgba(255, 220, 100, 0.35)`;
-      cctx.fill();
-    }
-  }
-
-  // Glow ring
-  const glow = cctx.createRadialGradient(0, 0, 36, 0, 0, 90);
-  glow.addColorStop(0, 'rgba(255,200,0,0.15)');
-  glow.addColorStop(1, 'rgba(255,200,0,0)');
-  cctx.beginPath();
-  cctx.arc(0, 0, 90, 0, Math.PI * 2);
-  cctx.fillStyle = glow;
-  cctx.fill();
-
-  cctx.restore();
-}
-
-function animateSunflower() {
-  pulseT += 0.025;
-  const breathScale = 1 + 0.06 * Math.sin(pulseT * 0.8);
-  drawSunflower(breathScale);
-  animFrame = requestAnimationFrame(animateSunflower);
-}
-
-// ─── SESSION LOGIC ────────────────────────────────────────────────────────────
-let currentLine = 0;
-let voiceAudio  = null;
 
 function updateProgress() {
-  const pct = (currentLine / TOTAL) * 100;
-  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-bar').style.width = ((currentLine / TOTAL) * 100) + '%';
 }
 
 function setLineText(text, visible) {
   const el = document.getElementById('line-text');
   el.style.opacity = visible ? '1' : '0';
-  if (visible) el.textContent = text;
+  if (text !== null) el.textContent = text;
 }
 
 function playLine(idx) {
-  if (idx >= TOTAL) {
-    endSession();
-    return;
-  }
+  if (idx >= TOTAL) { endSession(); return; }
   currentLine = idx;
   updateProgress();
 
-  // Show text
+  // Fade in text
   setLineText(LINES[idx], false);
   setTimeout(() => setLineText(LINES[idx], true), 300);
 
-  // Duck ambient
   duckAmbient(true);
 
-  // Play voice
   const pad = String(idx).padStart(2, '0');
-  voiceAudio = new Audio(`audio/garden_line_${pad}.mp3`);
-  voiceAudio.volume = 1.0;
-
-  voiceAudio.onended = () => {
+  voiceEl.src = 'audio/garden_line_' + pad + '.mp3';
+  voiceEl.load();
+  voiceEl.play().catch(() => {
+    // Fallback: show text for estimated duration then move on
     duckAmbient(false);
-    setLineText(LINES[idx], false);
-    setTimeout(() => playLine(idx + 1), 1800);
-  };
-
-  voiceAudio.onerror = () => {
-    // Missing file — show text for a natural pause then continue
-    duckAmbient(false);
-    const wordCount = LINES[idx].split(' ').length;
-    const pauseMs = Math.max(3000, wordCount * 380);
-    setTimeout(() => {
-      setLineText(LINES[idx], false);
-      setTimeout(() => playLine(idx + 1), 600);
-    }, pauseMs);
-  };
-
-  voiceAudio.play().catch(() => {
-    duckAmbient(false);
-    const wordCount = LINES[idx].split(' ').length;
-    const pauseMs = Math.max(3000, wordCount * 380);
-    setTimeout(() => {
-      setLineText(LINES[idx], false);
-      setTimeout(() => playLine(idx + 1), 600);
-    }, pauseMs);
+    const ms = Math.max(3000, LINES[idx].split(' ').length * 350);
+    setTimeout(() => { setLineText(null, false); setTimeout(() => playLine(idx + 1), 600); }, ms);
   });
 }
+
+voiceEl = new Audio();
+voiceEl.volume = 1.0;
+voiceEl.onended = () => {
+  duckAmbient(false);
+  setLineText(null, false);
+  setTimeout(() => playLine(currentLine + 1), 1800);
+};
+voiceEl.onerror = () => {
+  duckAmbient(false);
+  const ms = Math.max(3000, LINES[currentLine].split(' ').length * 350);
+  setTimeout(() => { setLineText(null, false); setTimeout(() => playLine(currentLine + 1), 600); }, ms);
+};
 
 function startSession() {
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('session-screen').style.display = 'flex';
-
-  ambientEl = playAmbient();
+  playAmbient();
   animateSunflower();
-
   setTimeout(() => playLine(0), 1200);
 }
 
 function endSession() {
   cancelAnimationFrame(animFrame);
   if (ambientEl) { ambientEl.pause(); ambientEl = null; }
-  if (voiceAudio) { voiceAudio.pause(); voiceAudio = null; }
-
+  if (voiceEl)   { voiceEl.pause(); voiceEl.src = ''; }
   document.getElementById('session-screen').style.display = 'none';
   document.getElementById('progress-bar').style.width = '100%';
   document.getElementById('end-screen').style.display = 'flex';
@@ -434,7 +320,6 @@ function restartSession() {
   startSession();
 }
 
-// ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
 document.getElementById('start-btn').addEventListener('click', startSession);
 document.getElementById('restart-btn').addEventListener('click', restartSession);
 </script>
