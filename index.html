@@ -294,7 +294,7 @@ function animateSunflower() {
 
 // ─── AUDIO ───────────────────────────────────────────────────────────────────
 function duckAmbient(duck) {
-  if (ambientEl) ambientEl.volume = duck ? 0.15 : 0.5;
+  // no ducking - ambient stays constant
 }
 
 function setLineText(text, visible) {
@@ -346,7 +346,7 @@ function startSession() {
 
   ambientEl = new Audio('audio/garden_ambient.mp3');
   ambientEl.loop   = true;
-  ambientEl.volume = 0.5;
+  ambientEl.volume = 0.25;
   ambientEl.play().catch(function(){});
 
   voiceEl = new Audio();
